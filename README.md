@@ -1,1 +1,1 @@
-# CCB-GraphGAN
+## Cycle-Consistent Bidirectional Graph Generative Adversarial Network
