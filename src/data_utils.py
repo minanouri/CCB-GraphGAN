@@ -7,7 +7,7 @@ import requests
 from tqdm.auto import tqdm
 
 
-def download_data(data_path):
+def download_data(data_path='../data'):
     if Path(data_path + '/nashville_freeway_anomaly.csv').is_file():
         print('nashville_freeway_anomaly.csv already exists, skipping download')
     else:
