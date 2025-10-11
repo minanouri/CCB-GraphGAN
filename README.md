@@ -8,7 +8,7 @@ This project introduces **CCB-GraphGAN** (Cycle-Consistent Bidirectional Graph G
 The model extends the Bidirectional GAN (BiGAN) framework with Graph Attention Networks (GATs) and incorporates cycle consistency constraints in both the data and latent spaces. This enables the network to jointly learn the distribution of normal traffic and its latent representations, ensuring reliable reconstruction of normal traffic patterns. During inference, anomalies are identified when reconstruction errors spike in specific nodes, allowing the system to precisely pinpoint disruptions at the node (lane) level.  
 
 Key features of the CCB-GraphGAN model include:  
-- **Adversarial graph learning** to capture complex traffic dependencies.  
+- **Bidirectional adversarial graph learning** to capture complex traffic dependencies.  
 - **Cycle consistency** for reliable reconstruction of traffic data and latent features.  
 - **Autoencoder-based detection** to identify anomalies at the lane level during inference.  
 
