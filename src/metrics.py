@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch_geometric.nn import global_mean_pool
 from sklearn.metrics import roc_curve, auc
 from tqdm.auto import tqdm
 
@@ -141,4 +142,64 @@ def calculate_auc(errors, anomaly_labels):
     fpr, tpr, thresholds = roc_curve(labels, scores)
     roc_auc = auc(fpr, tpr)
     return roc_auc
+
+
+def mmd_rbf_multiscale(x, y, sigmas=[0.5, 1.0, 2.0, 4.0, 8.0]):
+    """
+    Computes a stable, multi-scale RBF MMD between two sets of samples.
+    
+    x: [N, D]
+    y: [M, D]
+    sigmas: list of RBF bandwidths
+    """
+    mmds = []
+    
+    for sigma in sigmas:
+        # pairwise squared distances
+        xx = torch.cdist(x, x, p=2).pow(2)
+        yy = torch.cdist(y, y, p=2).pow(2)
+        xy = torch.cdist(x, y, p=2).pow(2)
+        
+        # Gaussian kernel
+        K_xx = torch.exp(-xx / (2 * sigma**2))
+        K_yy = torch.exp(-yy / (2 * sigma**2))
+        K_xy = torch.exp(-xy / (2 * sigma**2))
+        
+        mmd = K_xx.mean() + K_yy.mean() - 2 * K_xy.mean()
+        mmds.append(mmd)
+    
+    mmd_value = torch.stack(mmds).mean()
+    
+    # Ensure non-negative
+    return torch.clamp(mmd_value, min=0.0)
+
+
+def compute_forward_cycle_mmd(model, loader, num_samples=2000, sigmas=[0.5,1.0,2.0,4.0,8.0]):
+    model.netG.eval()
+    model.netE.eval()
+    
+    real_graphs = []
+    fake_graphs = []
+    count = 0
+    
+    for data in loader:
+        if count >= num_samples:
+            break
+
+        data = data.to(model.device)
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        z_real = model.netE(x, edge_index, batch)
+        x_recon = model.netG(z_real, edge_index)
+        x_graph = global_mean_pool(x, batch)
+        x_recon_graph = global_mean_pool(x_recon, batch)
+
+        real_graphs.append(x_graph)
+        fake_graphs.append(x_recon_graph)
+        count += x_graph.size(0)
+
+    real_graphs = torch.cat(real_graphs, dim=0)[:num_samples]
+    fake_graphs = torch.cat(fake_graphs, dim=0)[:num_samples]
+
+    return mmd_rbf_multiscale(real_graphs, fake_graphs, sigmas=sigmas).item()
 
