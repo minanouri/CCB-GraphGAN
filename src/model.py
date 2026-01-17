@@ -205,7 +205,7 @@ class Model:
                     z_recon = self.netE(self.netG(z, edge_index), edge_index, batch)
 
                     consistency_loss = F.l1_loss(x_recon, x, reduction='sum') + F.l1_loss(z_recon, z, reduction='sum')
-                    GE_loss = (criterion(D_real_pred, torch.zeros_like(D_real_pred)) + criterion(D_fake_pred, torch.ones_like(D_fake_pred))) + self.args.cc_weight * consistency_loss
+                    GE_loss = (criterion(D_real_pred, torch.ones_like(D_real_pred)) + criterion(D_fake_pred, torch.ones_like(D_fake_pred))) + self.args.cc_weight * consistency_loss
 
                     GE_loss.backward()
                     optimizerGE.step()
